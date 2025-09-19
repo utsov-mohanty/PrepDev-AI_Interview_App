@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { vapi } from '@/lib/vapi.sdk'
 import { interviewer } from '@/constants';
-import { createFeedback } from '@/lib/actions/general.action';
+import { createFeedback, testFirebaseConnection } from '@/lib/actions/general.action';
 
 enum CallStatus {
     INACTIVE = 'INACTIVE',
@@ -62,16 +62,34 @@ const Agent = ({ userName, userId, type, interviewId, questions }: AgentProps) =
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
         console.log('Generate feedback here.');
 
-        const { success, feedbackId: id } = await createFeedback({
-            interviewId: interviewId!,
-            userId: userId!,
-            transcript: messages
-        })
+        try {
+            // First test Firebase connection
+            console.log('Testing Firebase connection...');
+            const firebaseTest = await testFirebaseConnection();
+            console.log('Firebase test result:', firebaseTest);
+            
+            if (!firebaseTest.success) {
+                console.error('Firebase connection failed:', firebaseTest.error);
+                router.push('/');
+                return;
+            }
 
-        if(success && id){
-            router.push(`/interview/${interviewId}/feedback`)
-        } else {
-            console.log('Error saving feedback')
+            const result = await createFeedback({
+                interviewId: interviewId!,
+                userId: userId!,
+                transcript: messages
+            })
+
+            console.log('Feedback creation result:', result);
+
+            if(result.success && result.feedbackId){
+                router.push(`/interview/${interviewId}/feedback`)
+            } else {
+                console.error('Error saving feedback:', result.error || 'Unknown error')
+                router.push('/');
+            }
+        } catch (error) {
+            console.error('Error in handleGenerateFeedback:', error);
             router.push('/');
         }
     }
