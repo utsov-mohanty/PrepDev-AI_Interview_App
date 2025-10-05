@@ -4,18 +4,11 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   typescript: {
     ignoreBuildErrors: true,
   },
-  experimental: {
-    turbo: {
-      rules: {
-        '*.node': {
-          loaders: ['ignore-loader'],
-        },
-      },
-    },
-  },
+
   // Only apply webpack config when not using Turbopack
   ...(process.env.TURBOPACK !== '1' && {
     webpack: (config, { isServer }) => {
@@ -34,6 +27,14 @@ const nextConfig: NextConfig = {
       return config;
     },
   }),
+
+  turbopack: {
+    rules: {
+      '*.node': {
+        loaders: ['ignore-loader'],
+      },
+    }
+  }
 };
 
 export default nextConfig;
